@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # URL de connexion SSO
@@ -9,85 +11,55 @@ home_url = "https://user.7speaking.com/home"
 courses_url = "https://user.7speaking.com/workshop/news-based-lessons/news-lessons"
 
 # Données de connexion SSO
-email = "<Enter your mail>"
-password = "<Enter your password>"
+email = "votre_email@exemple.com"
+password = "votre_mot_de_passe"
 
-# Initialiser le navigateur
-driver = webdriver.Chrome()  # Assurez-vous que chromedriver est dans votre PATH
+driver = webdriver.Chrome()
 
 try:
-    # Ouvrir la page de connexion SSO
     print("Ouverture de la page de connexion SSO...")
     driver.get(sso_url)
-    time.sleep(2)  # Attendre que la page se charge
 
-    # Remplir les champs de connexion
+    print("Attente des champs de connexion...")
+    email_field = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, "username"))
+    )
+    password_field = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, "password"))
+    )
+
     print("Remplissage des champs de connexion...")
-    email_field = driver.find_element(By.NAME, "username")
     email_field.send_keys(email)
-    password_field = driver.find_element(By.NAME, "password")
     password_field.send_keys(password)
     password_field.send_keys(Keys.RETURN)
-    time.sleep(2)  # Attendre que la connexion se fasse
 
-    # Vérifier si la connexion a réussi
-    if "home" in driver.current_url:
-        print("Connexion SSO réussie !")
-    else:
-        print("Échec de la connexion SSO.")
-        exit()
+    WebDriverWait(driver, 10).until(
+        EC.url_contains("home")
+    )
+    print("Connexion SSO réussie !")
 
-    # Naviguer vers la page d'accueil
     print("Navigation vers la page d'accueil...")
     driver.get(home_url)
-    time.sleep(2)  # Attendre que la page se charge
 
-    # Naviguer vers la page des cours
     print("Navigation vers la page des cours...")
     driver.get(courses_url)
-    time.sleep(1)
 
-    # Décocher l'option "Vidéo"
     print("Décocher l'option 'Vidéo'...")
     try:
-        # Localiser la case à cocher "Vidéo"
-        video_checkbox = driver.find_element(By.CSS_SELECTOR, "input.jss108[type='checkbox']")
-
-        # Vérifier si la case est déjà cochée
+        video_checkbox = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "input.jss108[type='checkbox']"))
+        )
         if video_checkbox.is_selected():
-            print("La case 'Vidéo' est cochée. On la décoche...")
-            video_checkbox.click()  # Décocher la case
-            time.sleep(1)  # Attendre que l'action soit prise en compte
+            video_checkbox.click()
             print("Case 'Vidéo' décochée.")
         else:
             print("La case 'Vidéo' est déjà décochée.")
     except Exception as e:
         print(f"Erreur lors de la décoche de la case 'Vidéo' : {e}")
 
-    # Cliquer sur le bouton "Rechercher"
-    try:
-        search_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")  # Ajustez le sélecteur selon votre besoin
-        search_button.click()
-        print("Bouton 'Rechercher' cliqué.")
-        time.sleep(5)  # Attendre que l'action soit prise en compte
-    except Exception as e:
-        print(f"Erreur lors du clic sur le bouton 'Rechercher' : {e}")
-
-    # Trouver et cliquer sur tous les boutons "Study"
-    # try:
-    #     study_button = driver.find_element(By.CSS_SELECTOR, "button[type='study']")
-    #     study_button.click()
-    #     print("Bouton 'study' cliqué.")
-    #     time.sleep(10)  # Attendre que l'action soit prise en compte
-    # except Exception as e:
-    #     print(f"Erreur lors du clic sur le bouton 'study' : {e}")
-        
-        
-    driver.get(home_url)   
-    # Simuler une activité en accédant à la page d'accueil toutes les 5 minutes
     print("Démarrage de la simulation d'activité...")
     while True:
-        time.sleep(180)  # Attendre 5 minutes
+        time.sleep(180)
         print("Accès à la page d'accueil...")
         driver.get(home_url)
         if "home" in driver.current_url:
@@ -95,13 +67,17 @@ try:
         else:
             print("Erreur lors du chargement de la page.")
 
-        # Faire des exercices de temps en temps
-        if time.localtime().tm_min % 10 == 0:  # Toutes les 10 minutes
+        if time.localtime().tm_min % 10 == 0:
             print("Début des exercices...")
-            # Ajoutez ici le code pour interagir avec les exercices
             print("Exercices terminés.")
 
 except KeyboardInterrupt:
-    print("Script arrêté.")
+    print("Script arrêté par l'utilisateur.")
+except Exception as e:
+    print(f"Erreur inattendue : {e}")
 finally:
-    driver.quit()
+    try:
+        driver.quit()
+        print("Fermeture du navigateur.")
+    except Exception:
+        print("Le navigateur était déjà fermé.")
